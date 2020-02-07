@@ -3,8 +3,8 @@ import request from 'supertest';
 import { OK } from 'http-status-codes';
 import app from '../src/app';
 
-describe('Server App', () => {
-  it('Can say hello', done => {
+describe('app tests', () => {
+  it('can say hello', done => {
     request(app)
       .get('/api/node-js-express-template/hello')
       .expect('Content-Type', /json/)
