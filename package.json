@@ -9,6 +9,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nodemon --exec babel-node src/index.js",
+    "build": "babel src -d dist",
     "lint": "eslint --ext .js src test",
     "lint:fix": "eslint --ext .js src test --fix",
     "test": "mocha -r @babel/register test/setup/bootstrapper.js 'test/**/*.spec.js' --timeout 3000",
