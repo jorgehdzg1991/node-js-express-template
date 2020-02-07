@@ -17,7 +17,7 @@
   },
   "nyc": {
     "check-coverage": true,
-    "lines": 40,
+    "lines": 95,
     "include": [
       "src/**/*.js"
     ],
