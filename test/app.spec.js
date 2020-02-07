@@ -13,8 +13,8 @@ describe('Server App', () => {
         if (err) {
           done(err);
         } else {
-          const b = res.body;
-          expect(b.hello).toBe('world');
+          const { body } = res;
+          expect(body.hello).toBe('world');
           done();
         }
       });
