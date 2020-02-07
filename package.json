@@ -13,7 +13,8 @@
     "lint": "eslint --ext .js src test",
     "lint:fix": "eslint --ext .js src test --fix",
     "test": "mocha -r @babel/register test/setup/bootstrapper.js 'test/**/*.spec.js' --timeout 3000",
-    "coverage": "nyc _mocha -r @babel/register test/setup/bootstrapper.js 'test/**/*.spec.js' --timeout 3000"
+    "coverage": "nyc _mocha -r @babel/register test/setup/bootstrapper.js 'test/**/*.spec.js' --timeout 3000",
+    "docs": "apidoc -i src/ -o docs/build"
   },
   "nyc": {
     "check-coverage": true,
@@ -64,6 +65,7 @@
     "@babel/preset-env": "^7.8.4",
     "@babel/register": "^7.8.3",
     "@babel/runtime": "^7.8.4",
+    "apidoc": "^0.20.0",
     "babel-eslint": "^10.0.3",
     "core-js": "^3.6.4",
     "eslint": "^6.8.0",

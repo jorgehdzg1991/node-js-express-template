@@ -8,6 +8,14 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+/**
+ * @api {GET} /api/node-js-express-template/hello Hello
+ * @apiName Hello
+ * @apiGroup Hello
+ *
+ * @apiDescription Just say hello
+ *
+ */
 app.get('/api/node-js-express-template/hello', (req, res) => {
   respond(res, OK, {
     hello: 'world'
