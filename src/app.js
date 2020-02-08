@@ -17,6 +17,7 @@ app.use(bodyParser.json());
  *
  */
 app.get('/api/node-js-express-template/hello', (req, res) => {
+  console.log('Saying hello!');
   respond(res, OK, {
     hello: 'world'
   });
