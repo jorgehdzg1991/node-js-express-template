@@ -5,7 +5,7 @@ import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } from 'http-status-codes';
 import S3Stub from './stubs/S3Stub';
 import app from '../src/app';
 import File from '../src/models/File';
-import FilesController from '../src/controllers/FilesController';
+import S3Manager from '../src/managers/S3Manager';
 
 describe('app tests', () => {
   let sandbox;
@@ -136,7 +136,7 @@ describe('app tests', () => {
             Bucket: process.env.FILES_S3_BUCKET_NAME,
             Key: fileName,
             ContentType: '',
-            Expires: FilesController.defaultExpiration
+            Expires: S3Manager.presignedUrlExpirationSeconds
           });
           done();
         }
@@ -187,7 +187,7 @@ describe('app tests', () => {
             Bucket: process.env.FILES_S3_BUCKET_NAME,
             Key: fileName,
             ContentType: '',
-            Expires: FilesController.defaultExpiration
+            Expires: S3Manager.presignedUrlExpirationSeconds
           });
           done();
         }

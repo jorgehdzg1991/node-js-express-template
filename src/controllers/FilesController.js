@@ -1,16 +1,11 @@
-import AWS from 'aws-sdk';
 import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } from 'http-status-codes';
 import { respond } from '../utils/response';
-import File from '../models/File';
+import S3Manager from '../managers/S3Manager';
 
 export default class FilesController {
   static basePath = '/api/files';
 
-  static defaultExpiration = 900;
-
   app;
-
-  s3Client;
 
   constructor(app) {
     this.app = app;
@@ -19,12 +14,6 @@ export default class FilesController {
 
   static mountController(app) {
     return new FilesController(app);
-  }
-
-  static _createS3Client() {
-    return new AWS.S3({
-      region: process.env.AWS_REGION || undefined
-    });
   }
 
   static _handleUnknownError(res, e) {
@@ -37,53 +26,13 @@ export default class FilesController {
   initialize() {
     this.app.get(
       `${FilesController.basePath}/list`,
-      this.getFilesList.bind(this)
+      FilesController.getFilesList.bind(this)
     );
 
     this.app.get(
       `${FilesController.basePath}/upload`,
-      this.getNewFileUploadUrl.bind(this)
+      FilesController.getNewFileUploadUrl.bind(this)
     );
-  }
-
-  _listObjects(nextContinuationToken) {
-    return new Promise((resolve, reject) => {
-      const client = FilesController._createS3Client();
-
-      const params = {
-        Bucket: process.env.FILES_S3_BUCKET_NAME
-      };
-
-      if (nextContinuationToken) {
-        params.NextContinuationToken = nextContinuationToken;
-      }
-
-      client.listObjectsV2(params, async (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          const objects = [
-            ...data.Contents.map(item => File.fromS3Item(item)),
-            ...(data.NextContinuationToken
-              ? await this._listObjects(data.NextContinuationToken)
-              : [])
-          ];
-          resolve(objects);
-        }
-      });
-    });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  _getPresignedUrl(fileName) {
-    const client = FilesController._createS3Client();
-    const params = {
-      Bucket: process.env.FILES_S3_BUCKET_NAME,
-      Key: fileName,
-      ContentType: '',
-      Expires: FilesController.defaultExpiration
-    };
-    return client.getSignedUrlPromise('putObject', params);
   }
 
   /**
@@ -110,9 +59,9 @@ export default class FilesController {
    *  ]
    *
    */
-  async getFilesList(req, res) {
+  static async getFilesList(req, res) {
     try {
-      const files = await this._listObjects();
+      const files = await S3Manager.listObjects();
       respond(res, OK, files);
     } catch (e) {
       FilesController._handleUnknownError(res, e);
@@ -136,7 +85,7 @@ export default class FilesController {
    *    "url": "https://jorgehdzg-node-js-express-file-sharing.s3.us-west-2.amazonaws.com/test-file.txt?AWSAccessKeyId=AKIATUGOOFPM4STDN24X&Content-Type=&Expires=1581439981&Signature=bW9YJNxOa6mZ%2FDRd96olZIOX5RY%3D"
    *  }
    */
-  async getNewFileUploadUrl(req, res) {
+  static async getNewFileUploadUrl(req, res) {
     try {
       const { fileName } = req.query;
 
@@ -147,7 +96,7 @@ export default class FilesController {
         return;
       }
 
-      const url = await this._getPresignedUrl(fileName);
+      const url = await S3Manager.getPresignedUrl(fileName);
 
       respond(res, OK, { url });
     } catch (e) {
