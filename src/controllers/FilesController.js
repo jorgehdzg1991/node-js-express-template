@@ -1,6 +1,6 @@
 import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } from 'http-status-codes';
 import { respond } from '../utils/response';
-import S3Manager from '../managers/S3Manager';
+import FilesBucketManager from '../managers/FilesBucketManager';
 
 export default class FilesController {
   static basePath = '/api/files';
@@ -61,7 +61,7 @@ export default class FilesController {
    */
   static async getFilesList(req, res) {
     try {
-      const files = await S3Manager.listObjects();
+      const files = await FilesBucketManager.listObjects();
       respond(res, OK, files);
     } catch (e) {
       FilesController._handleUnknownError(res, e);
@@ -96,7 +96,7 @@ export default class FilesController {
         return;
       }
 
-      const url = await S3Manager.getPresignedUrl(fileName);
+      const url = await FilesBucketManager.getPresignedUrl(fileName);
 
       respond(res, OK, { url });
     } catch (e) {
