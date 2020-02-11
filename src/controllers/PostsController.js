@@ -1,4 +1,4 @@
-import { BAD_REQUEST, OK } from 'http-status-codes';
+import { BAD_REQUEST, NOT_FOUND, OK } from 'http-status-codes';
 import { respond } from '../utils/response';
 import Controller from '../models/Controller';
 import Post from '../models/Post';
@@ -12,8 +12,12 @@ export default class PostsController extends Controller {
 
   initialize() {
     this.app.get(PostsController.basePath, PostsController.getAllPosts);
-    this.app.get(`${PostsController.basePath}/:id`, PostsController.getById);
+    this.app.get(
+      `${PostsController.basePath}/:id`,
+      PostsController.getPostById
+    );
     this.app.post(PostsController.basePath, PostsController.createPost);
+    this.app.put(`${PostsController.basePath}/:id`, PostsController.updatePost);
   }
 
   static async getAllPosts(req, res) {
@@ -25,18 +29,11 @@ export default class PostsController extends Controller {
     }
   }
 
-  static async getById(req, res) {
+  static async getPostById(req, res) {
     try {
       const { id } = req.params;
-
-      if (!id) {
-        respond(res, BAD_REQUEST, {
-          message: '"id" parameter was missing in the request.'
-        });
-      }
-
-      const posts = await new Post(id).getByKey();
-      respond(res, OK, posts);
+      const post = await new Post(id).getByKey();
+      respond(res, OK, post);
     } catch (e) {
       PostsController.handleUnknownError(res, e);
     }
@@ -67,6 +64,32 @@ export default class PostsController extends Controller {
       const post = Post.newPost(author, title, content);
 
       await post.create();
+
+      respond(res, OK, post);
+    } catch (e) {
+      PostsController.handleUnknownError(res, e);
+    }
+  }
+
+  static async updatePost(req, res) {
+    try {
+      const { id } = req.params;
+      const post = await new Post(id).getByKey();
+
+      if (!post) {
+        respond(res, NOT_FOUND, {
+          message: `Post with id ${id} was not found.`
+        });
+        return;
+      }
+
+      Object.keys(req.body).forEach(key => {
+        post[key] = req.body[key];
+      });
+
+      post.updatedAt = new Date();
+
+      await post.update();
 
       respond(res, OK, post);
     } catch (e) {

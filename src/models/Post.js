@@ -65,4 +65,27 @@ export default class Post extends DBManager {
     const id = uuid();
     return new Post(id, author, title, content, likeCount);
   }
+
+  // eslint-disable-next-line class-methods-use-this
+  fromDBResponse(post) {
+    const {
+      id,
+      author,
+      title,
+      content,
+      likeCount,
+      updatedAt,
+      createDate
+    } = post;
+
+    return new Post(
+      id,
+      author,
+      title,
+      content,
+      likeCount,
+      updatedAt,
+      createDate
+    );
+  }
 }

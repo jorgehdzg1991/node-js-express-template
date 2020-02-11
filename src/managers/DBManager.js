@@ -19,23 +19,30 @@ export default class DBManager {
     throw new Error('Method not implemented. Please use a proper sub-class.');
   }
 
-  get() {
-    return this.db.scan().exec();
+  // eslint-disable-next-line class-methods-use-this
+  fromDBResponse() {
+    throw new Error('Method not implemented. Please use a proper sub-class.');
   }
 
-  getByKey() {
-    return this.db.get(this.getKey());
+  async get() {
+    const posts = await this.db.scan().exec();
+    return posts.map(p => this.fromDBResponse(p));
+  }
+
+  async getByKey() {
+    const post = await this.db.get(this.getKey());
+    return this.fromDBResponse(post);
   }
 
   create() {
     return this.db.create(this.toDBFormat());
   }
 
-  update(key) {
-    return this.db.update(key, this.toDBFormat());
+  update() {
+    return this.db.update(this.getKey(), this.toDBFormat());
   }
 
-  delete(key) {
-    return this.db.delete(key);
+  delete() {
+    return this.db.delete(this.getKey());
   }
 }
