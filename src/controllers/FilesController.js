@@ -1,26 +1,15 @@
-import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } from 'http-status-codes';
+import { OK, BAD_REQUEST } from 'http-status-codes';
 import { respond } from '../utils/response';
 import FilesBucketManager from '../managers/FilesBucketManager';
+import Controller from '../models/Controller';
 
-export default class FilesController {
+export default class FilesController extends Controller {
   static basePath = '/api/files';
 
   app;
 
-  constructor(app) {
-    this.app = app;
-    this.initialize();
-  }
-
   static mountController(app) {
     return new FilesController(app);
-  }
-
-  static _handleUnknownError(res, e) {
-    console.error(e);
-    respond(res, INTERNAL_SERVER_ERROR, {
-      message: e.message
-    });
   }
 
   initialize() {
@@ -64,7 +53,7 @@ export default class FilesController {
       const files = await FilesBucketManager.listObjects();
       respond(res, OK, files);
     } catch (e) {
-      FilesController._handleUnknownError(res, e);
+      FilesController.handleUnknownError(res, e);
     }
   }
 
@@ -100,7 +89,7 @@ export default class FilesController {
 
       respond(res, OK, { url });
     } catch (e) {
-      FilesController._handleUnknownError(res, e);
+      FilesController.handleUnknownError(res, e);
     }
   }
 }
