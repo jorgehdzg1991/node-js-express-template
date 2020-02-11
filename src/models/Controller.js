@@ -2,6 +2,10 @@ import { INTERNAL_SERVER_ERROR } from 'http-status-codes';
 import { respond } from '../utils/response';
 
 export default class {
+  static basePath = '';
+
+  app;
+
   constructor(app) {
     this.app = app;
     this.initialize();

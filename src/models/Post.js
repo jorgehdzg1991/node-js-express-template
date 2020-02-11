@@ -61,7 +61,7 @@ export default class Post extends DBManager {
     return this.id;
   }
 
-  static newPost(author, title, content, likeCount) {
+  static newPost(author, title, content, likeCount = 0) {
     const id = uuid();
     return new Post(id, author, title, content, likeCount);
   }

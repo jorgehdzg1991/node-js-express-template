@@ -6,8 +6,6 @@ import Controller from '../models/Controller';
 export default class FilesController extends Controller {
   static basePath = '/api/files';
 
-  app;
-
   static mountController(app) {
     return new FilesController(app);
   }
