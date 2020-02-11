@@ -20,7 +20,7 @@ export default class DBManager {
   }
 
   get() {
-    return this.db.get();
+    return this.db.scan().exec();
   }
 
   getByKey() {

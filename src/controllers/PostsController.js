@@ -11,11 +11,38 @@ export default class PostsController extends Controller {
   }
 
   initialize() {
-    this.app.post(`${PostsController.basePath}`, this.createPost);
+    this.app.get(PostsController.basePath, PostsController.getAllPosts);
+    this.app.get(`${PostsController.basePath}/:id`, PostsController.getById);
+    this.app.post(PostsController.basePath, PostsController.createPost);
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  async createPost(req, res) {
+  static async getAllPosts(req, res) {
+    try {
+      const posts = await new Post().get();
+      respond(res, OK, posts);
+    } catch (e) {
+      PostsController.handleUnknownError(res, e);
+    }
+  }
+
+  static async getById(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        respond(res, BAD_REQUEST, {
+          message: '"id" parameter was missing in the request.'
+        });
+      }
+
+      const posts = await new Post(id).getByKey();
+      respond(res, OK, posts);
+    } catch (e) {
+      PostsController.handleUnknownError(res, e);
+    }
+  }
+
+  static async createPost(req, res) {
     try {
       const expectedParams = ['author', 'title', 'content'];
       const validationErrors = [];
