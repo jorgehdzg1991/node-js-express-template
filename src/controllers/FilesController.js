@@ -1,14 +1,11 @@
-import AWS from 'aws-sdk';
-import { OK, INTERNAL_SERVER_ERROR } from 'http-status-codes';
+import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } from 'http-status-codes';
 import { respond } from '../utils/response';
-import File from '../models/File';
+import S3Manager from '../managers/S3Manager';
 
 export default class FilesController {
   static basePath = '/api/files';
 
   app;
-
-  s3Client;
 
   constructor(app) {
     this.app = app;
@@ -19,51 +16,29 @@ export default class FilesController {
     return new FilesController(app);
   }
 
-  static createS3Client() {
-    return new AWS.S3({
-      region: process.env.AWS_REGION || undefined
+  static _handleUnknownError(res, e) {
+    console.error(e);
+    respond(res, INTERNAL_SERVER_ERROR, {
+      message: e.message
     });
   }
 
   initialize() {
     this.app.get(
       `${FilesController.basePath}/list`,
-      this.getFilesList.bind(this)
+      FilesController.getFilesList.bind(this)
     );
-  }
 
-  _listObjects(nextContinuationToken) {
-    return new Promise((resolve, reject) => {
-      const client = FilesController.createS3Client();
-
-      const params = {
-        Bucket: process.env.FILES_S3_BUCKET_NAME
-      };
-
-      if (nextContinuationToken) {
-        params.NextContinuationToken = nextContinuationToken;
-      }
-
-      client.listObjectsV2(params, async (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          const objects = [
-            ...data.Contents.map(item => File.fromS3Item(item)),
-            ...(data.NextContinuationToken
-              ? await this._listObjects(data.NextContinuationToken)
-              : [])
-          ];
-          resolve(objects);
-        }
-      });
-    });
+    this.app.get(
+      `${FilesController.basePath}/upload`,
+      FilesController.getNewFileUploadUrl.bind(this)
+    );
   }
 
   /**
    * @api {GET} /api/files/list
    * @apiName Files
-   * @apiGroup ListFiles
+   * @apiGroup List all files in bucket
    *
    * @apiDescription Get a list of all files in the bucket
    *
@@ -84,15 +59,48 @@ export default class FilesController {
    *  ]
    *
    */
-  async getFilesList(req, res) {
+  static async getFilesList(req, res) {
     try {
-      const files = await this._listObjects();
+      const files = await S3Manager.listObjects();
       respond(res, OK, files);
     } catch (e) {
-      console.error(e);
-      respond(res, INTERNAL_SERVER_ERROR, {
-        message: e.message
-      });
+      FilesController._handleUnknownError(res, e);
+    }
+  }
+
+  /**
+   * @api {GET} /api/files/upload
+   * @apiName Files
+   * @apiGroup Get presigned upload url
+   *
+   * @apiDescription Get a presigned S3 url for a new upload
+   *
+   * @apiParam  {String}  id  Mandatory File name of the new upload
+   *
+   * @apiSuccess  (200) {String}  url S3 presigned upload url
+   *
+   * @apiSuccessExample {json}  Success-Response
+   *  HTTP/1.1 200 OK
+   *  {
+   *    "url": "https://jorgehdzg-node-js-express-file-sharing.s3.us-west-2.amazonaws.com/test-file.txt?AWSAccessKeyId=AKIATUGOOFPM4STDN24X&Content-Type=&Expires=1581439981&Signature=bW9YJNxOa6mZ%2FDRd96olZIOX5RY%3D"
+   *  }
+   */
+  static async getNewFileUploadUrl(req, res) {
+    try {
+      const { fileName } = req.query;
+
+      if (!fileName) {
+        respond(res, BAD_REQUEST, {
+          message: '"fileName" query parameter was missing in the request.'
+        });
+        return;
+      }
+
+      const url = await S3Manager.getPresignedUrl(fileName);
+
+      respond(res, OK, { url });
+    } catch (e) {
+      FilesController._handleUnknownError(res, e);
     }
   }
 }

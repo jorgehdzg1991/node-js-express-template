@@ -33,7 +33,12 @@ export default class S3Stub {
   };
 
   static listObjectsV2ErrorMessage =
-    'Oh no! Something terrible has happened :(';
+    'Oh no! Could not list objects in the bucket :(';
+
+  static getSignedUrlPromiseResponse = 'http://fake-upload-url.com';
+
+  static getSignedUrlPromiseErrorMessage =
+    'Oh no! Failed to generate signed url';
 
   s3Stub;
 
@@ -42,7 +47,8 @@ export default class S3Stub {
   constructor(sandbox) {
     this.s3Stub = sandbox.stub(AWS, 'S3');
     this.s3Fakes = {
-      listObjectsV2: sandbox.stub()
+      listObjectsV2: sandbox.stub(),
+      getSignedUrlPromise: sandbox.stub()
     };
     this.s3Stub.returns(this.s3Fakes);
   }
@@ -68,11 +74,31 @@ export default class S3Stub {
     });
   }
 
+  setGetSignedUrlPromiseToSucceed() {
+    this.s3Fakes.getSignedUrlPromise.returns(
+      Promise.resolve(S3Stub.getSignedUrlPromiseResponse)
+    );
+  }
+
+  setGetSignedUrlPromiseToFail() {
+    this.s3Fakes.getSignedUrlPromise.returns(
+      Promise.reject(new Error(S3Stub.getSignedUrlPromiseErrorMessage))
+    );
+  }
+
   get listObjectsV2Stub() {
     return this.s3Fakes.listObjectsV2;
   }
 
   listObjectsV2CallArgs(call = 0) {
     return this.s3Fakes.listObjectsV2.args[call];
+  }
+
+  get getSignedUrlPromiseStub() {
+    return this.s3Fakes.getSignedUrlPromise;
+  }
+
+  getSignedUrlPromiseCallArgs(call = 0) {
+    return this.s3Fakes.getSignedUrlPromise.args[call];
   }
 }
