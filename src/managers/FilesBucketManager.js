@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 import File from '../models/File';
 
-export default class S3Manager {
+export default class FilesBucketManager {
   static presignedUrlExpirationSeconds = 900;
 
   static _createS3Client() {
@@ -12,7 +12,7 @@ export default class S3Manager {
 
   static listObjects(nextContinuationToken) {
     return new Promise((resolve, reject) => {
-      const client = S3Manager._createS3Client();
+      const client = FilesBucketManager._createS3Client();
 
       const params = {
         Bucket: process.env.FILES_S3_BUCKET_NAME
@@ -29,7 +29,7 @@ export default class S3Manager {
           const objects = [
             ...data.Contents.map(item => File.fromS3Item(item)),
             ...(data.NextContinuationToken
-              ? await S3Manager.listObjects(data.NextContinuationToken)
+              ? await FilesBucketManager.listObjects(data.NextContinuationToken)
               : [])
           ];
           resolve(objects);
@@ -39,12 +39,12 @@ export default class S3Manager {
   }
 
   static getPresignedUrl(fileName) {
-    const client = S3Manager._createS3Client();
+    const client = FilesBucketManager._createS3Client();
     const params = {
       Bucket: process.env.FILES_S3_BUCKET_NAME,
       Key: fileName,
       ContentType: '',
-      Expires: S3Manager.presignedUrlExpirationSeconds
+      Expires: FilesBucketManager.presignedUrlExpirationSeconds
     };
     return client.getSignedUrlPromise('putObject', params);
   }
