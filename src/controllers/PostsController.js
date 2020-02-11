@@ -95,8 +95,12 @@ export default class PostsController extends Controller {
         return;
       }
 
+      const allowedParameters = ['author', 'title', 'content', 'likeCount'];
+
       Object.keys(req.body).forEach(key => {
-        post[key] = req.body[key];
+        if (allowedParameters.includes(key)) {
+          post[key] = req.body[key];
+        }
       });
 
       post.updatedAt = new Date();
