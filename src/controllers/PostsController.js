@@ -18,6 +18,10 @@ export default class PostsController extends Controller {
     );
     this.app.post(PostsController.basePath, PostsController.createPost);
     this.app.put(`${PostsController.basePath}/:id`, PostsController.updatePost);
+    this.app.delete(
+      `${PostsController.basePath}/:id`,
+      PostsController.deletePost
+    );
   }
 
   static async getAllPosts(req, res) {
@@ -33,6 +37,14 @@ export default class PostsController extends Controller {
     try {
       const { id } = req.params;
       const post = await new Post(id).getByKey();
+
+      if (!post) {
+        respond(res, NOT_FOUND, {
+          message: `Post with id ${id} was not found.`
+        });
+        return;
+      }
+
       respond(res, OK, post);
     } catch (e) {
       PostsController.handleUnknownError(res, e);
@@ -92,6 +104,16 @@ export default class PostsController extends Controller {
       await post.update();
 
       respond(res, OK, post);
+    } catch (e) {
+      PostsController.handleUnknownError(res, e);
+    }
+  }
+
+  static async deletePost(req, res) {
+    try {
+      const { id } = req.params;
+      await new Post(id).delete();
+      respond(res, OK);
     } catch (e) {
       PostsController.handleUnknownError(res, e);
     }

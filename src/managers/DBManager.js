@@ -31,7 +31,7 @@ export default class DBManager {
 
   async getByKey() {
     const post = await this.db.get(this.getKey());
-    return this.fromDBResponse(post);
+    return post ? this.fromDBResponse(post) : null;
   }
 
   create() {
