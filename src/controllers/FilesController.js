@@ -19,13 +19,10 @@ export default class FilesController {
     return new FilesController(app);
   }
 
-  getS3Client() {
-    if (!this.s3Client) {
-      this.s3Client = new AWS.S3({
-        region: process.env.AWS_REGION || undefined
-      });
-    }
-    return this.s3Client;
+  static createS3Client() {
+    return new AWS.S3({
+      region: process.env.AWS_REGION || undefined
+    });
   }
 
   initialize() {
@@ -37,7 +34,7 @@ export default class FilesController {
 
   _listObjects(nextContinuationToken) {
     return new Promise((resolve, reject) => {
-      const client = this.getS3Client();
+      const client = FilesController.createS3Client();
 
       const params = {
         Bucket: process.env.FILES_S3_BUCKET_NAME
@@ -93,7 +90,9 @@ export default class FilesController {
       respond(res, OK, files);
     } catch (e) {
       console.error(e);
-      respond(res, INTERNAL_SERVER_ERROR);
+      respond(res, INTERNAL_SERVER_ERROR, {
+        message: e.message
+      });
     }
   }
 }

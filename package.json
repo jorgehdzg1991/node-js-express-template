@@ -24,7 +24,8 @@
     ],
     "exclude": [
       "dist",
-      "src/index.js"
+      "src/index.js",
+      "src/lambda.js"
     ],
     "reporter": [
       "lcov",
