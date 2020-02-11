@@ -1,10 +1,11 @@
 import expect from 'expect';
 import sinon from 'sinon';
 import request from 'supertest';
-import { OK, INTERNAL_SERVER_ERROR } from 'http-status-codes';
+import { OK, INTERNAL_SERVER_ERROR, BAD_REQUEST } from 'http-status-codes';
 import S3Stub from './stubs/S3Stub';
 import app from '../src/app';
 import File from '../src/models/File';
+import FilesController from '../src/controllers/FilesController';
 
 describe('app tests', () => {
   let sandbox;
@@ -106,6 +107,87 @@ describe('app tests', () => {
           expect(s3Stub.listObjectsV2Stub.calledOnce).toBe(true);
           expect(s3Stub.listObjectsV2CallArgs()[0]).toEqual({
             Bucket: environment.FILES_S3_BUCKET_NAME
+          });
+          done();
+        }
+      });
+  });
+
+  it('should return an S3 signed upload url', done => {
+    s3Stub.setGetSignedUrlPromiseToSucceed();
+
+    const fileName = 'fake-file.txt';
+
+    request(app)
+      .get(`/api/files/upload?fileName=${fileName}`)
+      .expect('Content-Type', /json/)
+      .expect(OK)
+      .end((err, res) => {
+        if (err) {
+          done(err);
+        } else {
+          const { body } = res;
+          expect(body).toEqual({
+            url: S3Stub.getSignedUrlPromiseResponse
+          });
+          expect(s3Stub.getSignedUrlPromiseStub.calledOnce).toBe(true);
+          expect(s3Stub.getSignedUrlPromiseCallArgs()[0]).toEqual('putObject');
+          expect(s3Stub.getSignedUrlPromiseCallArgs()[1]).toEqual({
+            Bucket: process.env.FILES_S3_BUCKET_NAME,
+            Key: fileName,
+            ContentType: '',
+            Expires: FilesController.defaultExpiration
+          });
+          done();
+        }
+      });
+  });
+
+  it('should return 400 BadRequest if no fileName is sent', done => {
+    s3Stub.setGetSignedUrlPromiseToSucceed();
+
+    request(app)
+      .get('/api/files/upload')
+      .expect('Content-Type', /json/)
+      .expect(BAD_REQUEST)
+      .end((err, res) => {
+        if (err) {
+          done(err);
+        } else {
+          const { body } = res;
+          expect(body).toEqual({
+            message: '"fileName" query parameter was missing in the request.'
+          });
+          expect(s3Stub.getSignedUrlPromiseStub.called).toBe(false);
+          done();
+        }
+      });
+  });
+
+  it('should handle get S3 upload url', done => {
+    s3Stub.setGetSignedUrlPromiseToFail();
+
+    const fileName = 'fake-file.txt';
+
+    request(app)
+      .get(`/api/files/upload?fileName=${fileName}`)
+      .expect('Content-Type', /json/)
+      .expect(INTERNAL_SERVER_ERROR)
+      .end((err, res) => {
+        if (err) {
+          done(err);
+        } else {
+          const { body } = res;
+          expect(body).toEqual({
+            message: S3Stub.getSignedUrlPromiseErrorMessage
+          });
+          expect(s3Stub.getSignedUrlPromiseStub.calledOnce).toBe(true);
+          expect(s3Stub.getSignedUrlPromiseCallArgs()[0]).toEqual('putObject');
+          expect(s3Stub.getSignedUrlPromiseCallArgs()[1]).toEqual({
+            Bucket: process.env.FILES_S3_BUCKET_NAME,
+            Key: fileName,
+            ContentType: '',
+            Expires: FilesController.defaultExpiration
           });
           done();
         }

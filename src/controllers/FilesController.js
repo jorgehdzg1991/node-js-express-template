@@ -6,6 +6,8 @@ import File from '../models/File';
 export default class FilesController {
   static basePath = '/api/files';
 
+  static defaultExpiration = 900;
+
   app;
 
   s3Client;
@@ -73,13 +75,13 @@ export default class FilesController {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  _getPresignedUrl(fileName, expiration = 900) {
+  _getPresignedUrl(fileName) {
     const client = FilesController._createS3Client();
     const params = {
       Bucket: process.env.FILES_S3_BUCKET_NAME,
       Key: fileName,
       ContentType: '',
-      Expires: expiration
+      Expires: FilesController.defaultExpiration
     };
     return client.getSignedUrlPromise('putObject', params);
   }
