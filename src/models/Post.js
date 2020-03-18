@@ -1,5 +1,5 @@
-import DBManager from '../managers/DBManager';
 import uuid from 'uuid/v4';
+import DBManager from '../managers/DBManager';
 
 const postsDBSchema = {
   id: {
